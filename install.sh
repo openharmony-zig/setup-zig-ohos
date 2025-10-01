@@ -9,22 +9,12 @@ set -eux
 URL_BASE="https://github.com/openharmony-zig/zig-patch/releases/download"
 
 # Determine platform and set OS_FILENAME
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    # musl or gnu
-    if command -v ldd >/dev/null 2>&1; then
-        LDD_OUTPUT=$(ldd --version 2>&1 || true)
-        if echo "$LDD_OUTPUT" | grep -i "musl" >/dev/null; then
-            OS_FILENAME="zig-x86_64-linux-musl-baseline.tar.gz"
-            OS="linux-musl"
-        else
-            OS_FILENAME="zig-x86_64-linux-gnu-baseline.tar.gz"
-            OS="linux-gnu"
-        fi
-    else
-        # default use gnu
-        OS_FILENAME="zig-x86_64-linux-gnu-baseline.tar.gz"
-        OS="linux-gnu"
-    fi
+if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "linux-musl"* ]]; then
+    OS_FILENAME="zig-x86_64-linux-gnu-baseline.tar.gz"
+    OS="linux-gnu"
+elif [[ "$OSTYPE" == "linux-musl"* ]]; then
+    OS_FILENAME="zig-x86_64-linux-musl-baseline.tar.gz"
+    OS="linux-musl"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ $(uname -m) == 'arm64' ]]; then
         OS_FILENAME="zig-aarch64-macos-none-baseline.tar.gz"
@@ -121,7 +111,7 @@ fi
 
 # Extract the archive
 echo "Extracting Zig OHOS..."
-tar -xzf "zig-ohos.tar.gz"
+tar -xf "zig-ohos.tar.gz"
 
 # Find the extracted directory (should start with 'zig-')
 ZIG_EXTRACTED_DIR=$(find . -maxdepth 1 -name "zig-*" -type d | head -n 1)
@@ -138,6 +128,13 @@ echo "Found extracted directory: $ZIG_EXTRACTED_DIR"
 # Rename to standard 'zig' directory
 mv "$ZIG_EXTRACTED_DIR" "zig"
 ZIG_DIR="${WORK_DIR}/zig"
+
+# Set the executable path based on platform
+if [[ "$OS" == "windows" ]]; then
+    ZIG_EXECUTABLE="${ZIG_DIR}/zig.exe"
+else
+    ZIG_EXECUTABLE="${ZIG_DIR}/zig"
+fi
 
 # Clean up the archive
 rm "zig-ohos.tar.gz"
