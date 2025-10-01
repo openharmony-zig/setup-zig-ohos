@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           # aarch64 macOS (Apple Silicon)
-          - os: macos-14
+          - os: macos-latest
             name: "macOS ARM64"
           
           # x86_64 Windows
