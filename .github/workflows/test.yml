@@ -46,7 +46,7 @@ jobs:
         uses: ./
         with:
           tag: '0.16.0-dev.312+164c598cd'
-          cache: truegit remote add origin git@github.com:openharmony-zig/setup-zig-ohos.git
+          cache: true
       
       - name: Test with cache (second run)
         uses: ./

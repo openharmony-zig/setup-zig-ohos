@@ -9,12 +9,12 @@ set -eux
 URL_BASE="https://github.com/openharmony-zig/zig-patch/releases/download"
 
 # Determine platform and set OS_FILENAME
-if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "linux-musl"* ]]; then
-    OS_FILENAME="zig-x86_64-linux-gnu-baseline.tar.gz"
-    OS="linux-gnu"
-elif [[ "$OSTYPE" == "linux-musl"* ]]; then
+if [[ "$OSTYPE" == "linux-musl"* ]]; then
     OS_FILENAME="zig-x86_64-linux-musl-baseline.tar.gz"
     OS="linux-musl"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS_FILENAME="zig-x86_64-linux-gnu-baseline.tar.gz"
+    OS="linux-gnu"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ $(uname -m) == 'arm64' ]]; then
         OS_FILENAME="zig-aarch64-macos-none-baseline.tar.gz"
