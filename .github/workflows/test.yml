@@ -13,7 +13,6 @@ jobs:
         include:
           # aarch64 macOS (Apple Silicon)
           - os: macos-latest
-            runner: macos-14  # Apple Silicon runner
             name: "macOS ARM64"
           
           # x86_64 Windows
