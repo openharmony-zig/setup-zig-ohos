@@ -1,0 +1,61 @@
+name: Test Zig OHOS Setup
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          # aarch64 macOS (Apple Silicon)
+          - os: macos-latest
+            runner: macos-14  # Apple Silicon runner
+            name: "macOS ARM64"
+          
+          # x86_64 Windows
+          - os: windows-latest
+            name: "Windows x64"
+          
+          # x86_64 Linux (gnu)
+          - os: ubuntu-latest
+            name: "Linux x64 (gnu)"
+          
+          # x86_64 Linux (musl) 
+          - os: ubuntu-latest
+            container: alpine:latest
+            name: "Linux x64 (musl)"
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    name: Test on ${{ matrix.name }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install dependencies (Alpine)
+        if: matrix.container == 'alpine:latest'
+        run: |
+          apk add --no-cache curl tar gzip bash coreutils
+      
+      - name: Setup Zig OHOS
+        uses: ./
+        with:
+          tag: '0.16.0-dev.312+164c598cd'
+          cache: truegit remote add origin git@github.com:openharmony-zig/setup-zig-ohos.git
+      
+      - name: Test with cache (second run)
+        uses: ./
+        with:
+          tag: '0.16.0-dev.312+164c598cd'
+          cache: true
+      
+      - name: Verify cached installation
+        shell: bash
+        run: |
+          echo "Verifying cached installation..."
+          zig version

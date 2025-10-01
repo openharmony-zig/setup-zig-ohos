@@ -1,0 +1,46 @@
+name: 'Setup Zig OHOS'
+description: 'Download and install Zig OHOS from openharmony-zig/zig-patch releases'
+inputs:
+  tag:
+    description: 'Zig OHOS release tag'
+    required: false
+    default: '0.16.0-dev.312+164c598cd'
+  cache:
+    description: "Whether to cache the Zig installation or not"
+    required: false
+    default: 'true'
+outputs:
+  zig-path:
+    description: "Path to the Zig OHOS installation directory"
+    value: ${{ steps.install_zig_ohos.outputs.zig-path }}
+  zig-version:
+    description: "Installed Zig OHOS version"
+    value: ${{ steps.install_zig_ohos.outputs.zig-version }}
+  platform:
+    description: "Detected platform identifier"
+    value: ${{ steps.install_zig_ohos.outputs.platform }}
+runs:
+  using: "composite"
+  steps:
+    - name: Cache Zig OHOS
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ~/setup-zig-ohos
+        key: "v1-zig-ohos-${{ runner.os }}-${{ runner.arch }}-${{ inputs.tag }}"
+      if: ${{ inputs.cache == 'true' }}
+    
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+    
+    - name: Download and install Zig OHOS
+      id: install_zig_ohos
+      run: install.sh
+      shell: bash
+      env:
+        INPUT_TAG: "${{ inputs.tag }}"
+        INPUT_CACHE: "${{ inputs.cache }}"
+        INPUT_WAS_CACHED: "${{ steps.cache.outputs.cache-hit }}"
