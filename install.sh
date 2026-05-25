@@ -39,6 +39,41 @@ WORK_DIR="${HOME}/setup-zig-ohos"
 mkdir -p "${WORK_DIR}"
 cd "${WORK_DIR}"
 
+to_actions_path() {
+    local path="$1"
+
+    if [[ "$OS" == "windows" ]]; then
+        if command -v cygpath >/dev/null 2>&1; then
+            cygpath -w "$path"
+            return
+        fi
+
+        if [[ "$path" =~ ^/([a-zA-Z])/(.*)$ ]]; then
+            local drive
+            drive=$(printf '%s' "${BASH_REMATCH[1]}" | tr '[:lower:]' '[:upper:]')
+            printf '%s:\\%s\n' "$drive" "${BASH_REMATCH[2]//\//\\}"
+            return
+        fi
+    fi
+
+    printf '%s\n' "$path"
+}
+
+export_zig_to_actions() {
+    local zig_dir="$1"
+    local zig_version="$2"
+    local zig_dir_for_actions
+    zig_dir_for_actions=$(to_actions_path "$zig_dir")
+
+    # Windows runners may continue in pwsh, which does not understand MSYS paths.
+    printf '%s\n' "$zig_dir_for_actions" >> "$GITHUB_PATH"
+    echo "Added ${zig_dir_for_actions} to PATH"
+
+    printf 'zig-path=%s\n' "$zig_dir_for_actions" >> "${GITHUB_OUTPUT}"
+    printf 'zig-version=%s\n' "$zig_version" >> "${GITHUB_OUTPUT}"
+    printf 'platform=%s\n' "$OS" >> "${GITHUB_OUTPUT}"
+}
+
 echo "Working directory: $WORK_DIR"
 echo "Platform: $OS"
 echo "Tag: $INPUT_TAG"
@@ -52,20 +87,14 @@ if [[ "$INPUT_WAS_CACHED" == "true" ]]; then
     if [[ -f "${ZIG_DIR}/zig" ]] || [[ -f "${ZIG_DIR}/zig.exe" ]]; then
         echo "Cached installation verified"
         
-        # add to PATH
-        echo "${ZIG_DIR}" >> $GITHUB_PATH
-        echo "Added ${ZIG_DIR} to PATH"
-        
         # get version and set output
         if [[ -f "${ZIG_DIR}/zig" ]]; then
             ZIG_VERSION=$(${ZIG_DIR}/zig version)
         else
             ZIG_VERSION=$(${ZIG_DIR}/zig.exe version)
         fi
-        
-        echo "zig-path=$ZIG_DIR" >> "${GITHUB_OUTPUT}"
-        echo "zig-version=$ZIG_VERSION" >> "${GITHUB_OUTPUT}"
-        echo "platform=$OS" >> "${GITHUB_OUTPUT}"
+
+        export_zig_to_actions "$ZIG_DIR" "$ZIG_VERSION"
         exit 0
     else
         echo "Cached installation is invalid, will re-download"
@@ -144,19 +173,12 @@ if [[ "$OS" != "windows" ]]; then
     chmod +x "$ZIG_EXECUTABLE"
 fi
 
-# Add Zig to PATH for subsequent steps
-echo "${ZIG_DIR}" >> $GITHUB_PATH
-echo "Added ${ZIG_DIR} to PATH"
-
 # Get Zig version
 ZIG_VERSION=$($ZIG_EXECUTABLE version)
+
+export_zig_to_actions "$ZIG_DIR" "$ZIG_VERSION"
 
 echo "✅ Zig OHOS installed successfully"
 echo "📍 Platform: $OS"
 echo "🏷️  Version: $ZIG_VERSION"
-echo "📂 Path: $ZIG_DIR"
-
-# Set GitHub Actions outputs
-echo "zig-path=$ZIG_DIR" >> "${GITHUB_OUTPUT}"
-echo "zig-version=$ZIG_VERSION" >> "${GITHUB_OUTPUT}"
-echo "platform=$OS" >> "${GITHUB_OUTPUT}"
+echo "📂 Path: $(to_actions_path "$ZIG_DIR")"
